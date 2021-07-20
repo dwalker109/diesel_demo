@@ -1,6 +1,11 @@
+use diesel::prelude::*;
 use std::io::{stdin, Read};
 
-use diesel_demo::{create_post, establish_connection};
+use diesel_demo::{
+    establish_connection,
+    models::{NewPost, Post},
+    schema::posts,
+};
 
 fn main() {
     let conn = establish_connection();
@@ -14,6 +19,12 @@ fn main() {
     let mut body = String::new();
     stdin().read_to_string(&mut body).unwrap();
 
-    let post = create_post(&conn, title, &body);
+    let new_post = NewPost { title, body: &body };
+
+    let post = diesel::insert_into(posts::table)
+        .values(&new_post)
+        .get_result::<Post>(&conn)
+        .expect("error saving new post");
+
     println!("Saved draft with id: {}", post.id);
 }
